@@ -119,3 +119,84 @@ pr = pokerRound(100, 0, 1, 2, [1,1], [0,0], [10,10])
 
 pr.drawRandCards()
 print(pr.d)
+
+# fictitious play algorithm based off of class discussion
+class fictitiousPlay:
+    
+    # necessary variables for fictitious play algorithm
+    self.N
+    self.a
+    self.b
+    self.I
+    self.xPayoff
+    self.yPayoff
+    self.bFracs
+    self.cFracs
+
+    def __init__(num, ante, bet, numTry):
+        
+        # initialize variables
+        self.N = num
+        self.a = ante
+        self.b = bet
+        self.I = numTry
+        self.xPayoff = [[0,a,-a],[0,a+b,-(a+b)],[0,a,-a]]
+        self.yPayoff = -self.xPayoff
+        self.bFracs = [1/2] * self.N
+        self.cFracs = [1/2] * self.N
+
+    def fictitiousAlg:
+
+        #loop over number of tries
+        for i in range(1,self.I):
+            
+            # counters for bet and call, useful for setting bFrac and cFrac arrays
+            bCount = [0] * self.N
+            cCount = [0] * self.N
+            
+            # reevaluate betting fraction for player X
+            for j in range(1,self.N):
+                
+                checkUtil = 0
+                betUtil = 0
+
+                for k in range(1,self.N):
+
+                    checkUtil += (1/self.N)
+                    betUtil += (1/self.N)
+
+                if betUtil > checkUtil:
+                    bCount[j] += 1
+
+            # set bFracs vector here
+            self.bFracs = (1/i)*bCount
+            
+            # reevaluate calling fraction for player Y
+            for j in range(1,self.N):
+                
+                foldUtil = 0
+                callUtil = 0
+
+                for k in range(1,self.N):
+
+                    foldUtil += (1/self.N)
+                    callUtil += (1/self.N)
+
+                if callUtil > foldUtil:
+                    cCount[j] += 1
+
+            # set cFracs vector here
+            self.cFracs = (1/i)*cCount
+
+    def plotFracs:
+        
+        # plot betting fraction plot
+        plt.title('Player X Betting Fraction as a Function of Their Hand')
+        plt.plot(self.bFracs)
+        plt.savefig('bettingFraction.png')
+        
+        # plot calling fraction plot
+        plt.title('Player Y Calling Fraction as a Function of Their Hand')
+        plt.plot(self.cFracs)
+        plt.savefig('callingFraction.png')
+

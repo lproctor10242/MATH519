@@ -123,72 +123,89 @@ print(pr.d)
 # fictitious play algorithm based off of class discussion
 class fictitiousPlay:
     
-    # necessary variables for fictitious play algorithm
-    self.N
-    self.a
-    self.b
-    self.I
-    self.xPayoff
-    self.yPayoff
-    self.bFracs
-    self.cFracs
-
-    def __init__(num, ante, bet, numTry):
+    def __init__(self, num, ante, bet, numTry):
         
         # initialize variables
         self.N = num
         self.a = ante
         self.b = bet
         self.I = numTry
-        self.xPayoff = [[0,a,-a],[0,a+b,-(a+b)],[0,a,-a]]
-        self.yPayoff = -self.xPayoff
         self.bFracs = [1/2] * self.N
         self.cFracs = [1/2] * self.N
+        self.bCount = [0] * self.N
+        self.cCount = [0] * self.N
 
-    def fictitiousAlg:
+    def fictitiousAlg(self):
 
         #loop over number of tries
         for i in range(1,self.I):
             
             # counters for bet and call, useful for setting bFrac and cFrac arrays
-            bCount = [0] * self.N
-            cCount = [0] * self.N
+            # bCount = [0] * self.N
+            # cCount = [0] * self.N
             
             # reevaluate betting fraction for player X
-            for j in range(1,self.N):
-                
-                checkUtil = 0
-                betUtil = 0
+            for j in range(1,self.N+1,1):
 
-                for k in range(1,self.N):
+                checkUtil = 0.0
+                betUtil = 0.0
 
-                    checkUtil += (1/self.N)
-                    betUtil += (1/self.N)
+                for k in range(1,self.N+1,1):
+
+                    checkUtil += (1/float(i))*self.xPayoff(j,k,1)
+                    betUtil += (1/float(i))*self.xPayoff(j,k,0)
 
                 if betUtil > checkUtil:
-                    bCount[j] += 1
+                    self.bCount[j-1] += 1
 
             # set bFracs vector here
-            self.bFracs = (1/i)*bCount
+            self.bFracs = [(1/float(i))*b for b in self.bCount]
             
             # reevaluate calling fraction for player Y
-            for j in range(1,self.N):
+            for j in range(1,self.N+1,1):
                 
-                foldUtil = 0
-                callUtil = 0
+                foldUtil = 0.0
+                callUtil = 0.0
 
-                for k in range(1,self.N):
+                for k in range(1,self.N+1,1):
 
-                    foldUtil += (1/self.N)
-                    callUtil += (1/self.N)
+                    foldUtil += (1/float(i))*self.yPayoff(j,k,1)
+                    callUtil += (1/float(i))*self.yPayoff(j,k,0)
 
                 if callUtil > foldUtil:
-                    cCount[j] += 1
+                    self.cCount[j-1] += 1
 
             # set cFracs vector here
-            self.cFracs = (1/i)*cCount
+            self.cFracs = [(1/float(i))*c for c in self.cCount]
+    
+    # probably wrong
+    def xPayoff(self,x,y,check):
+        
+        payoff = 0.0
+        bY = self.cFracs[y-1]
 
-    def plotFracs:
+        if check:
+            payoff = (1/float(self.N))*((x-1)*(self.a)+0+(self.N-x)*(-self.a))
+        else:
+            payoff = (1/float(self.N))*(1-bY)*((x-1)*(self.a)+0+(self.N-x)*(-self.a))
+            payoff += (1/float(self.N))*bY*((x-1)*(self.a+self.b)+0+(self.N-x)*(-(self.a+self.b)))
+
+        return payoff
+    
+    # probably wrong
+    def yPayoff(self,y,x,fold):
+
+        payoff = 0.0
+        aX = self.bFracs[x-1]
+
+        if fold:
+            payoff = (1/float(self.N))*aX*((y-1)*(self.a)+0+(self.N-y)*(-self.a))
+        else:
+            payoff = (1/float(self.N))*aX*((y-1)*(self.a+self.b)+0+(self.N-y)*(-(self.a+self.b)))
+
+        return payoff
+
+    def plotFracs(self):
         
         # plot betting fraction plot
         plt.title('Player X Betting Fraction as a Function of Their Hand')
@@ -200,3 +217,8 @@ class fictitiousPlay:
         plt.plot(self.cFracs)
         plt.savefig('callingFraction.png')
 
+if __name__ == "__main__":
+
+    game = fictitiousPlay(100,1,1,1000)
+    game.fictitiousAlg()
+    game.plotFracs()

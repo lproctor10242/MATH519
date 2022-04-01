@@ -126,8 +126,8 @@ class fictitiousPlay:
     def fictitiousAlg(self):
 
         #loop over number of tries
-        for i in range(1,self.I):
-            
+        for i in range(1,self.I+1,1):
+
             # reevaluate betting fraction for player X
             for j in range(1,self.N+1,1):
 
@@ -142,8 +142,8 @@ class fictitiousPlay:
                 if betUtil > checkUtil:
                     self.bCount[j-1] += 1
 
-            # set bFracs vector here
-            self.bFracs = [(1/float(i))*b for b in self.bCount]
+                # set bFracs vector here
+                self.bFracs[j-1] = (1/float(i))*self.bCount[j-1]
             
             # reevaluate calling fraction for player Y
             for j in range(1,self.N+1,1):
@@ -159,8 +159,8 @@ class fictitiousPlay:
                 if callUtil > foldUtil:
                     self.cCount[j-1] += 1
 
-            # set cFracs vector here
-            self.cFracs = [(1/float(i))*c for c in self.cCount]
+                # set cFracs vector here
+                self.cFracs[j-1] = (1/float(i))*self.cCount[j-1]
     
     # probably wrong
     def xPayoff(self,x,y,check):
@@ -204,7 +204,7 @@ class fictitiousPlay:
 
 if __name__ == "__main__":
 
-    game = fictitiousPlay(100,1,1,1000)
+    game = fictitiousPlay(100,1,1,100)
     game.fictitiousAlg()
     game.plotFracs()
     

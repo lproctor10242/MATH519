@@ -171,7 +171,7 @@ class fictitiousPlay:
         if check:
             payoff = (1/float(self.N))*((x-1)*(self.a)+0+(self.N-x)*(-self.a))
         else:
-            payoff = (1/float(self.N))*(1-bY)*((x-1)*(self.a)+0+(self.N-x)*(-self.a))
+            payoff = (1/float(self.N))*(1-bY)*(self.a)
             payoff += (1/float(self.N))*bY*((x-1)*(self.a+self.b)+0+(self.N-x)*(-(self.a+self.b)))
 
         return payoff
@@ -183,7 +183,7 @@ class fictitiousPlay:
         aX = self.bFracs[x-1]
 
         if fold:
-            payoff = -self.a
+            payoff = (1/float(self.N))*aX*(-self.a)
         else:
             payoff = (1/float(self.N))*aX*((y-1)*(self.a+self.b)+0+(self.N-y)*(-(self.a+self.b)))
 

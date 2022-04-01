@@ -108,18 +108,6 @@ class pokerRound:
             self.p = 0 # reset pot
             return [0, pot]
 
-# Creates half-street game with:
-#   - Cards labeled 1 to 100
-#   - Initial pot of 0
-#   - Ante of 1 betting unit
-#   - Bet of 2 betting units
-#   - Initial drawing of cards is 1 for each player
-#   - Each player has amount 10 betting units at start
-pr = pokerRound(100, 0, 1, 2, [1,1], [0,0], [10,10])
-
-pr.drawRandCards()
-print(pr.d)
-
 # fictitious play algorithm based off of class discussion
 class fictitiousPlay:
     
@@ -139,10 +127,6 @@ class fictitiousPlay:
 
         #loop over number of tries
         for i in range(1,self.I):
-            
-            # counters for bet and call, useful for setting bFrac and cFrac arrays
-            # bCount = [0] * self.N
-            # cCount = [0] * self.N
             
             # reevaluate betting fraction for player X
             for j in range(1,self.N+1,1):
@@ -199,7 +183,7 @@ class fictitiousPlay:
         aX = self.bFracs[x-1]
 
         if fold:
-            payoff = (1/float(self.N))*aX*((y-1)*(self.a)+0+(self.N-y)*(-self.a))
+            payoff = -self.a
         else:
             payoff = (1/float(self.N))*aX*((y-1)*(self.a+self.b)+0+(self.N-y)*(-(self.a+self.b)))
 
@@ -213,6 +197,7 @@ class fictitiousPlay:
         plt.savefig('bettingFraction.png')
         
         # plot calling fraction plot
+        plt.clf()
         plt.title('Player Y Calling Fraction as a Function of Their Hand')
         plt.plot(self.cFracs)
         plt.savefig('callingFraction.png')
@@ -222,3 +207,15 @@ if __name__ == "__main__":
     game = fictitiousPlay(100,1,1,1000)
     game.fictitiousAlg()
     game.plotFracs()
+    
+    # Creates half-street game with:
+    #   - Cards labeled 1 to 100
+    #   - Initial pot of 0
+    #   - Ante of 1 betting unit
+    #   - Bet of 2 betting units
+    #   - Initial drawing of cards is 1 for each player
+    #   - Each player has amount 10 betting units at start
+    # pr = pokerRound(100, 0, 1, 2, [1,1], [0,0], [10,10])
+
+    # pr.drawRandCards()
+    # print(pr.d)

@@ -109,104 +109,125 @@ class pokerRound:
             return [0, pot]
 
 # fictitious play algorithm based off of class discussion
+# fictitious play algorithm based off of class discussion
 class fictitiousPlay:
-    
+
     def __init__(self, num, ante, bet, numTry):
-        
+
         # initialize variables
         self.N = num
         self.a = ante
         self.b = bet
         self.I = numTry
-        self.bFracs = [1/2] * self.N
-        self.cFracs = [1/2] * self.N
-        self.bCount = [0] * self.N
-        self.cCount = [0] * self.N
+
+    def xPayoff(self,x,y,bet,call):
+        payoff = 0
+        if (bet == 1):       
+            if (call == 0): 
+                payoff = self.a
+            elif (x > y):    
+                payoff = self.a + self.b
+            elif (x < y):   
+                payoff = -self.a - self.b
+            else:              
+                payoff = 0.0
+        else:                 
+            if (x > y):      
+                payoff = self.a
+            elif (x < y):   
+                payoff = -self.a
+            else:              
+                payoff = 0.0
+
+        return payoff
 
     def fictitiousAlg(self):
 
-        #loop over number of tries
-        for i in range(1,self.I+1,1):
+        # count and fraction vectors
+        bFrac = [0.5] * self.N
+        cFrac = [0.5] * self.N
+        bCount = [0] * self.N
+        cCount = [0] * self.N
+
+        # loop over number of tries
+        for i in range(1,self.I+1):
 
             # reevaluate betting fraction for player X
-            for j in range(1,self.N+1,1):
+            for j in range(self.N):
 
-                checkUtil = 0.0
-                betUtil = 0.0
+                checkUtil = 0
+                betUtil = 0
 
-                for k in range(1,self.N+1,1):
+                for k in range(self.N):
 
-                    checkUtil += (1/float(i))*self.xPayoff(j,k,1)
-                    betUtil += (1/float(i))*self.xPayoff(j,k,0)
+                    bY = cFrac[k]
+                    checkUtil += self.xPayoff(j,k,0,0)
+                    betUtil += ((bY*self.xPayoff(j,k,1,1)) + ((1-bY)*self.xPayoff(j,k,1,0)))
 
                 if betUtil > checkUtil:
-                    self.bCount[j-1] += 1
+                    bCount[j] += 1
 
-                # set bFracs vector here
-                self.bFracs[j-1] = (1/float(i))*self.bCount[j-1]
-            
+                bFrac[j] = (1/i)*bCount[j]
+
             # reevaluate calling fraction for player Y
-            for j in range(1,self.N+1,1):
-                
-                foldUtil = 0.0
-                callUtil = 0.0
+            for j in range(self.N):
 
-                for k in range(1,self.N+1,1):
+                foldUtil = 0
+                callUtil = 0
 
-                    foldUtil += (1/float(i))*self.yPayoff(j,k,1)
-                    callUtil += (1/float(i))*self.yPayoff(j,k,0)
+                for k in range(self.N):
+
+                    aX = bFrac[k]
+                    foldUtil += (-1*aX*self.xPayoff(k,j,1,0))
+                    callUtil += (-1*aX*self.xPayoff(k,j,1,1))
 
                 if callUtil > foldUtil:
-                    self.cCount[j-1] += 1
+                    cCount[j] += 1
 
-                # set cFracs vector here
-                self.cFracs[j-1] = (1/float(i))*self.cCount[j-1]
-    
-    # probably wrong
-    def xPayoff(self,x,y,check):
-        
-        payoff = 0.0
-        bY = self.cFracs[y-1]
+                cFrac[j] = (1/i)*cCount[j]
 
-        if check:
-            payoff = (1/float(self.N))*((x-1)*(self.a)+0+(self.N-x)*(-self.a))
-        else:
-            payoff = (1/float(self.N))*(1-bY)*(self.a)
-            payoff += (1/float(self.N))*bY*((x-1)*(self.a+self.b)+0+(self.N-x)*(-(self.a+self.b)))
-
-        return payoff
-    
-    # probably wrong
-    def yPayoff(self,y,x,fold):
-
-        payoff = 0.0
-        aX = self.bFracs[x-1]
-
-        if fold:
-            payoff = (1/float(self.N))*aX*(-self.a)
-        else:
-            payoff = (1/float(self.N))*aX*((y-1)*(self.a+self.b)+0+(self.N-y)*(-(self.a+self.b)))
-
-        return payoff
-
-    def plotFracs(self):
-        
-        # plot betting fraction plot
-        plt.title('Player X Betting Fraction as a Function of Their Hand')
-        plt.plot(self.bFracs)
-        plt.savefig('bettingFraction.png')
-        
-        # plot calling fraction plot
-        plt.clf()
-        plt.title('Player Y Calling Fraction as a Function of Their Hand')
-        plt.plot(self.cFracs)
-        plt.savefig('callingFraction.png')
+        # return fraction vectors
+        return bFrac, cFrac
 
 if __name__ == "__main__":
-
+    
+    # create game and run fictitious play for different iteration nums
     game = fictitiousPlay(100,1,1,100)
-    game.fictitiousAlg()
-    game.plotFracs()
+    b1,c1 = game.fictitiousAlg()
+
+    game = fictitiousPlay(100,1,1,1000)
+    b2,c2 = game.fictitiousAlg()
+
+    game = fictitiousPlay(100,1,1,10000)
+    b3,c3 = game.fictitiousAlg()
+    
+    game = fictitiousPlay(100,1,1,100000)
+    b4,c4 = game.fictitiousAlg()
+    
+    # plot betting fraction plot
+    plt.figure(figsize=(12,8))
+    plt.title('Player X Betting Fraction as a Function of Their Hand')
+    plt.xlabel('Card Number')
+    plt.ylabel('Betting Fraction')
+    plt.plot(b1,label='100 iter.')
+    plt.plot(b2,label='1000 iter.')
+    plt.plot(b3,label='10000 iter.')
+    plt.plot(b4,label='100000 iter.')
+    plt.legend()
+    plt.savefig('bettingFraction.png')
+    
+    # plot calling fraction plot
+    plt.clf()
+    plt.figure(figsize=(12,8))
+    plt.title('Player Y Calling Fraction as a Function of Their Hand')
+    plt.xlabel('Card Number')
+    plt.ylabel('Calling Fraction')
+    plt.plot(c1, label='100 iter.')
+    plt.plot(c2, label='1000 iter.')
+    plt.plot(c3, label='10000 iter.')
+    plt.plot(c4, label='100000 iter.')
+    plt.legend()
+    plt.savefig('callingFraction.png')
     
     # Creates half-street game with:
     #   - Cards labeled 1 to 100

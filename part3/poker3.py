@@ -29,7 +29,7 @@ import numpy as np
 import random
 
 class Qlearning:
-	def __init__(self, num, ante, bet, episodes): ##############################
+	def __init__(self, num, ante, bet, episodes): #############################
 		''' initialize variables (# cards, ante, bet, number of iterations) '''
 
 		# halfstreet stuff
@@ -40,12 +40,12 @@ class Qlearning:
 
 		# exploration probabilities
 		self.exp = 1
-		self.minexp = 0.01
-		self.decay = 0.001
+		self.init = 0.3
+		self.end = 0.001
 
 		# learning rate & discount factor
 		self.lr = 1
-		self.df = 0.6
+		self.min = 0.001
 	###########################################################################
 
 	def p1_payoff(self, p1c, p2c, bet, fold): #################################
@@ -85,73 +85,77 @@ class Qlearning:
 				return (0.0)
 	###########################################################################
 
-	def train(self): #########################################################################
+	def train(self): ###############################################################
 		''' trains the agent to play the game via qLearning algorithm'''
 
 		# create table to hold q values
 		q_table = np.zeros([self.N,4])
 		#strat_counter = np.zeros([self.N, 4])
-
-		# create struct to hold rewards
-		totRewards = []
 		
 		# take an iterative approach to the q-learning (grid search impractical)
 		for e in range(self.I):
-			# sum of the total rewards from agent:
-			eReward1 = 0
-			eReward2 = 0
 
+			# iterate the possible values of p1c and p2c
 			for i in range(self.N):
 				for j in range(self.N):
 					strat1 = 0
 					strat2 = 3
 
-					# for player 1 we either explore or go w/ prev knowledge
+					# we first see if we go for both random
 					if (np.random.uniform(0,1) < self.exp):
 						strat1 = random.randrange(2)
-						if (strat1 == 1):
-							strat2 = np.argmax(q_table[j,2:])
-					# if we not exploring for 1, we either explore or go w/ prev
-					elif(np.random.uniform(0,1) < self.exp):
-						strat1 = np.argmax(q_table[i,:2])
-						if (strat1 == 1):
-							strat2 = random.randrange(2,4)
+						strat2 = random.randrange(2,4)
 					# if we not exploring, just go with prev for both
 					else:
 						strat1 = np.argmax(q_table[i,:2])
 						if (strat1 == 1):
 							strat2 = np.argmax(q_table[j,2:])
+							strat2 += 2
+
+					# for player 1 we either explore or go w/ prev knowledge
+					'''elif (np.random.uniform(0,1) < self.exp):
+						strat1 = random.randrange(2)
+						if (strat1 == 1):
+							strat2 = np.argmax(q_table[j,2:])
+							strat2 += 2
+
+					# if we not exploring for 1, we either explore or go w/ prev
+					elif (np.random.uniform(0,1) < self.exp):
+					#else:
+						strat1 = np.argmax(q_table[i,:2])
+						if (strat1 == 1):
+							strat2 = random.randrange(2,4)
+
+					# if we not exploring, just go with prev for both
+					else:
+						strat1 = np.argmax(q_table[i,:2])
+						if (strat1 == 1):
+							strat2 = np.argmax(q_table[j,2:])
+							strat2 += 2'''
 
 					# calculate rewards
 					rwd1 = self.p1_payoff(i, j, strat1, strat2)
 					if (strat1 == 1): # calculate r2
 						rwd2 = self.p2_payoff(i, j, strat2)
 
-					# calculate total rewards
-					eReward1 += rwd1
+					# update q_values using formula
+					q_table[i,strat1]=(1-self.lr)*q_table[i,strat1]+self.lr*rwd1
 					if (strat1 == 1):
-						eReward2 += rwd2
+						q_table[j,strat2]=(1-self.lr)*q_table[j,strat2]+self.lr*rwd2						
 
-					# update q_values
-					q_table[i, strat1] = (1-self.lr) * q_table[i, strat1] + self.lr * rwd1
-					if (strat1 == 1):
-						q_table[j, strat2] = (1-self.lr) * q_table[j, strat2] + self.lr * rwd2				
+			# calculate new exploration probabilities
+			#r = max(0, (self.N-e)/self.N)
+			#self.exp = (self.init-self.end)*r+self.end
+			
+			# calculate the new learning rate
+			self.lr = max(self.min,1/((e+2)**(0.69)))
+			self.exp = self.lr
+			#self.lr = self.exp
+			#print(self.lr)
 
-			# calculate exploration probabilities
-			self.exp = max(self.minexp, np.exp(-self.decay))
-			self.lr = 1/((e+1)**(0.6))
-			#self.lr = min(self.lr, 1/((e+1)**(0.6)))
-
-			# calculate total rewards
-			totRewards.append([eReward1,eReward2])
-
+		# make our strategies based on the q-value
 		bFrac = [0] * self.N
 		cFrac = [0] * self.N
-
-		#minB = min(q_table[:,0])
-		#q_table[:,:2] -= minB
-		#q_table[:,2:] += 2
-
 		for i in range(len(q_table)):
 			# make comparison for betting fraction
 			if (q_table[i,1] > q_table[i,0]):
@@ -164,14 +168,15 @@ class Qlearning:
 				cFrac[i] = 1
 			else:
 				cFrac[i] = 0
+				
 		print(q_table)
 		return bFrac, cFrac
-	######################################################################################	
+	################################################################################
 
-if __name__ == "__main__":
+if __name__ == "__main__": ###########################################
 
 	# create games and run Q-learning with multiple iteration numbers:
-	g1 = Qlearning(100, 1, 1, 100)
+	g1 = Qlearning(100, 1, 1, 20000)
 	bFrac, cFrac = g1.train()
 	#print(bFrac)
 	#print(cFrac)
@@ -194,3 +199,4 @@ if __name__ == "__main__":
 	plt.plot(cFrac, label='100 iter.')
 	plt.legend()
 	plt.savefig('callingValues.png')
+######################################################################

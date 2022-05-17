@@ -24,12 +24,12 @@ Deliverables:
     2. the calling fraction for each card i as a function of i
 ------------------------------------------------------------------------------
 '''
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import random
 
 class Qlearning:
-	def __init__(self, num, ante, bet, episodes): ##############################
+	def __init__(self, num, ante, bet, episodes): #############################
 		''' initialize variables (# cards, ante, bet, number of iterations) '''
 
 		# halfstreet stuff
@@ -40,10 +40,245 @@ class Qlearning:
 
 		# exploration probabilities
 		self.exp = 1
-		self.minexp = 0.01
-		self.decay = 0.001
+		self.init = 0.3
+		self.end = 0.001
 
 		# learning rate & discount factor
-		self.lr = 0.1
-		self.df = 0.6
+		self.lr = 1
+		self.min = 0.001
 	###########################################################################
+
+	def p1_payoff(self, p1c, p2c, p1bet, p1fold, p2strat): ############
+		''' calculates the reward of player1 based on cards & strats played '''
+
+		# player 1 tries to bet
+		if (p1bet == 1):
+
+			# player 2 folds
+			if (p2strat == 2):
+				return self.a
+			# player 2 does not fold
+			elif (p1c > p2c):
+				return (self.a + self.b)
+			elif (p1c < p2c):
+				return (-self.a - self.b)
+			else: # we tied
+				return (0.0)
+		
+		# else player 1 didn't try to bet and player 2 tries to check
+		elif (p2strat == 4):
+			
+			# we have a showdown
+			if (p1c > p2c):
+				return self.a
+			elif (p1c < p2c):
+				return (-self.a)
+			else:
+				return (0.0)
+		
+		# else player 1 tries to fold assuming player 2 tried to bet
+		elif (p1fold == 6):
+			return (-self.a)
+		
+		# else we have showdown
+		else: # (here p1fold should be 7)
+			if (p1c > p2c):
+				return (self.a + self.b)
+			elif (p1c < p2c):
+				return (-self.a - self.b)
+			else:
+				return (0.0)
+	###########################################################################
+
+	def p2_payoff(self, p1c, p2c, p1bet, p1fold, p2strat): ############
+		''' calculates the reward of player1 based on cards & strats played '''
+
+		# player 1 tries to bet
+		if (p1bet == 1):
+
+			# player 2 folds
+			if (p2strat == 2):
+				return (-self.a)
+			# player 2 does not fold
+			elif (p1c > p2c):
+				return (self.a + self.b)
+			elif (p1c < p2c):
+				return (-self.a - self.b)
+			else: # we tied
+				return (0.0)
+		
+		# else player 1 didn't try to bet and player 2 tries to check
+		elif (p2strat == 4):
+			
+			# we have a showdown
+			if (p1c > p2c):
+				return (-self.a)
+			elif (p1c < p2c):
+				return self.a
+			else:
+				return (0.0)
+		
+		# else player 1 tries to fold assuming player 2 tried to bet
+		elif (p1fold == 6):
+			return self.a
+		
+		# else we have showdown as player 1 doubles down
+		else: # (here p1fold should be 7)
+			if (p1c > p2c):
+				return (-self.a + -self.b)
+			elif (p1c < p2c):
+				return (self.a + self.b)
+			else:
+				return (0.0)
+	###########################################################################
+
+	def train(self): #########################################################################
+		''' trains the agent to play the game via qLearning algorithm'''
+
+		# create table to hold q values
+		q_table = np.zeros([self.N,8])
+		#strat_counter = np.zeros([self.N, 4])
+		
+		# take an iterative approach to the q-learning (grid search impractical)
+		for e in range(self.I):
+
+			# iterate the possible values of p1c and p2c
+			for i in range(self.N):
+				for j in range(self.N):
+					strat1 = 0
+					strat2 = 3
+					strat3 = 6
+
+					# we first see if we go for both random
+					if (np.random.uniform(0,1) < self.exp):
+						strat1 = random.randrange(2)
+						if (strat1 == 1):
+							strat2 = random.randrange(2,4)
+						else:
+							strat2 = random.randrange(4,6)
+					# if we not exploring, just go with prev for both
+					else:
+						strat1 = np.argmax(q_table[i,:2])
+						if (strat1 == 1):
+							strat2 = np.argmax(q_table[j,2:4])
+							strat2 += 2
+						else:
+							strat2 = np.argmax(q_table[j,4:6])
+							strat2 += 4
+
+					# now we could have the case where p1 must call or fold
+					if (strat1 == 0 and strat2 == 5):
+						if (np.random.uniform(0,1) < self.exp):
+							strat3 = random.randrange(6,8)
+						else: # we either go exploring or go w/ prev knowledge
+							strat3 = np.argmax(q_table[i,6:])
+
+					# calculate rewards
+					rwd1 = self.p1_payoff(i, j, strat1, strat3, strat2)
+					rwd2 = self.p2_payoff(i, j, strat1, strat3, strat2)
+
+					if (strat1 == 0 and strat2 == 5):
+						rwd3 = self.p1_payoff(i, j, strat1, strat3, strat2)
+
+					# update q_values using formula
+					q_table[i,strat1]=(1-self.lr)*q_table[i,strat1]+self.lr*rwd1
+					q_table[j,strat2]=(1-self.lr)*q_table[j,strat2]+self.lr*rwd2
+
+					if (strat1 == 0 and strat2 == 5):
+						q_table[i,strat3]=(1-self.lr)*q_table[i,strat3]+self.lr*rwd3				
+
+			# calculate new exploration probabilities
+			r = max(0, (self.N-e)/self.N)
+			self.exp = (self.init-self.end)*r+self.end
+			
+			# calculate the new learning rate
+			self.lr = max(self.min,1/((e+2)**(0.69)))
+			#self.exp = self.lr
+			#self.lr = self.exp
+			#print(self.lr)
+
+		# make our strategies based on the q-value
+		p1bFrac = [0] * self.N
+		p1cFrac = [0] * self.N
+		p2bFrac = [0] * self.N
+		p2cFrac = [0] * self.N
+		for i in range(len(q_table)):
+			# make comparison for player 1 betting fraction
+			if (q_table[i,1] > q_table[i,0]):
+				p1bFrac[i] = 1
+			else:
+				p1bFrac[i] = 0
+
+			# make comparison for player 2 calling fraction
+			if (q_table[i,3] > q_table[i,2]):
+				p2cFrac[i] = 1
+			else:
+				p2cFrac[i] = 0
+
+			# make comparison for player 2 betting fraction
+			if (q_table[i,5] > q_table[i,4]):
+				p2bFrac[i] = 1
+			else:
+				p2bFrac[i] = 0
+
+			# make comparison for player 1 calling fraction
+			if (q_table[i,7] > q_table[i,6]):
+				p1cFrac[i] = 1
+			else:
+				p1cFrac[i] = 0
+				
+		print(q_table)
+		return p1bFrac, p1cFrac, p2bFrac, p2cFrac
+	######################################################################################	
+
+if __name__ == "__main__": ###########################################
+
+	# create games and run Q-learning with multiple iteration numbers:
+	g1 = Qlearning(100, 1, 1, 1000)
+	b1Frac, c1Frac, b2Frac, c2Frac = g1.train()
+
+	# plot x betting fraction plot
+	plt.figure(figsize=(12,8))
+	plt.title('Player X Betting Fraction')
+	plt.xlabel('Card Number')
+	plt.ylabel('Betting Fraction')
+	plt.plot(b1Frac)
+	plt.savefig('xbettingFraction.png')
+
+	# plot y betting fraction plot
+	plt.figure(figsize=(12,8))
+	plt.title('Player Y Betting Fraction')
+	plt.xlabel('Card Number')
+	plt.ylabel('Betting Fraction')
+	plt.plot(b2Frac)
+	plt.savefig('ybettingFraction.png')
+
+	# plot y calling fraction plot
+	plt.figure(figsize=(12,8))
+	plt.title('Player Y Calling Fraction')
+	plt.xlabel('Card Number')
+	plt.ylabel('Calling Fraction')
+	plt.plot(c2Frac)
+	plt.savefig('ycallingFraction.png')
+
+	#calculate check call and check fold fractions
+	xchc = [(1-b1Frac[i])*(c1Frac[i]) for i in range(100)]
+	xchf = [(1-b1Frac[i])*(1-c1Frac[i]) for i in range(100)]
+	xbchc = [b1Frac[i] + xchc[i] for i in range(100)]
+	xbchf = [b1Frac[i] + xchf[i] for i in range(100)]
+	xchfchc = [xchf[i] + xchc[i] for i in range(100)]
+
+	# plot calling fraction plot
+	plt.clf()
+	plt.figure(figsize=(12,8))
+	plt.title('Player X Betting, Check Fold, and Check Call Fractions and Their Pairwise Sums')
+	plt.xlabel('Card Number')
+	plt.ylabel('Fractions')
+	plt.plot(b1Frac, label='Bet')
+	plt.plot(xchc, label='Check Call')
+	plt.plot(xchf, label='Check Fold')
+	plt.plot(xbchc, label='Bet + Check Call')
+	plt.plot(xbchf, label='Bet + Check Fold')
+	plt.plot(xchfchc, label='Check Fold + Check Call')
+	plt.legend()
+	plt.savefig('xcombinedFraction.png')

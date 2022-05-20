@@ -147,6 +147,7 @@ if __name__ == "__main__":
     plt.xlabel('Card Number')
     plt.ylabel('Betting Fraction')
     plt.plot(xb)
+    plt.scatter(xb)
     plt.savefig('xbettingFraction.png')
 
     # plot y betting fraction plot
@@ -155,6 +156,7 @@ if __name__ == "__main__":
     plt.xlabel('Card Number')
     plt.ylabel('Betting Fraction')
     plt.plot(yb)
+    plt.scatter(yb)
     plt.savefig('ybettingFraction.png')
 
     # plot y calling fraction plot
@@ -163,6 +165,7 @@ if __name__ == "__main__":
     plt.xlabel('Card Number')
     plt.ylabel('Calling Fraction')
     plt.plot(yc)
+    plt.scatter(yc)
     plt.savefig('ycallingFraction.png')
 
     #calculate check call and check fold fractions
@@ -179,10 +182,16 @@ if __name__ == "__main__":
     plt.xlabel('Card Number')
     plt.ylabel('Fractions')
     plt.plot(xb, label='Bet')
+    plt.scatter(xb)
     plt.plot(xchc, label='Check Call')
+    plt.scatter(xchc)
     plt.plot(xchf, label='Check Fold')
+    plt.scatter(xchf)
     plt.plot(xbchc, label='Bet + Check Call')
+    plt.scatter(xbchc)
     plt.plot(xbchf, label='Bet + Check Fold')
+    plt.scatter(xbchf)
     plt.plot(xchfchc, label='Check Fold + Check Call')
+    plt.scatter(xchfchc)
     plt.legend()
     plt.savefig('xcombinedFraction.png')

@@ -278,4 +278,4 @@ if __name__ == "__main__": ###########################################
 	plt.xlabel('Card Number')
 	plt.ylabel('Calling Fraction')
 	plt.plot(c1Frac)
-	plt.savefig('xcombinedFraction.png')
+	plt.savefig('xcallingFraction.png')
